@@ -1,0 +1,51 @@
+package com.mkyong.java11.jep321;
+
+import org.json.simple.JSONObject;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+public class FetchDocsApp {
+
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
+    public static void main(String[] args) throws Exception {
+
+
+        String result = createEnvironment();
+
+        System.out.println(result);
+
+    }
+
+    private static String createEnvironment() throws InterruptedException, ExecutionException, TimeoutException {
+        JSONObject json = new JSONObject();
+        json.put("name","Stage");
+        json.put("push_notification_url","https://api.getmyinvoices.com/test_portal/notifications/");
+        json.put("push_input_request_url","https://api.getmyinvoices.com/test_portal/input_request/");
+        json.put("api_key","ASWZ-3U19-5N0P-YKZR-10BN-R2IO-90NH-SNWY");
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
+                .uri(URI.create("https://api.stage.fetchdocs.io/fetch/v1/createEnvironment"))
+                .setHeader("Content-Type", "application/json")
+                .build();
+
+        CompletableFuture<HttpResponse<String>> response =
+                httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        String result = response.thenApply(HttpResponse::body).get(5, TimeUnit.SECONDS);
+        return result;
+    }
+
+}
